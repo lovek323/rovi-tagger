@@ -1,0 +1,61 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "eb391f20826a88d810e902423f5aa234",
+    "packages": [
+        {
+            "name": "nass600/get-id3",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nass600/getID3.git",
+                "reference": "36e82c89e5c7d6e534e1e852ae5a3320a214e25c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nass600/getID3/zipball/36e82c89e5c7d6e534e1e852ae5a3320a214e25c",
+                "reference": "36e82c89e5c7d6e534e1e852ae5a3320a214e25c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.2"
+            },
+            "type": "php-library",
+            "autoload": {
+                "files": [
+                    "getid3/getid3.php",
+                    "getid3/write.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GNU"
+            ],
+            "authors": [
+                {
+                    "name": "James Heinrich"
+                }
+            ],
+            "description": "PHP library for handling audio/video files metadata",
+            "homepage": "https://github.com/nass600/getID3",
+            "keywords": [
+                "id3",
+                "metadata",
+                "mp3"
+            ],
+            "time": "2013-10-06 22:25:34"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "nass600/get-id3": 20
+    },
+    "prefer-stable": false,
+    "platform": [],
+    "platform-dev": []
+}

@@ -1,0 +1,158 @@
+#!/usr/bin/env php
+<?php
+
+use RoviTagger\RoviClient\Request\SearchRequest;
+use RoviTagger\RoviClient\Response\Album;
+use RoviTagger\RoviClient\Response\Artist;
+use RoviTagger\RoviClient\Response\Genre;
+use RoviTagger\RoviClient\Response\SearchResponse;
+use RoviTagger\RoviClient\Response\SearchResult;
+use RoviTagger\RoviClient\Response\Style;
+use RoviTagger\RoviClient\RoviClient;
+
+require_once __DIR__.'/../vendor/autoload.php';
+
+/**
+ * Proportion threshhold for duration matching.
+ */
+const THRESHHOLD = 0.1;
+
+if (count($argv) < 3) {
+    print "Usage: rovi-tagger <directory> <search term>\n";
+    exit(1);
+}
+
+$config        = json_decode(file_get_contents(__DIR__.'/config.json'));
+$directory     = $argv[1];
+$files         = array();
+$albumDuration = 0;
+$dirIterator   = new RecursiveDirectoryIterator($directory);
+$iterator      = new RecursiveIteratorIterator($dirIterator);
+
+/** @var SplFileInfo $file */
+foreach ($iterator as $file) {
+    $filename = $file->getFilename();
+    if ($filename[0] == '.') {
+        // Ignore hidden files.
+        continue;
+    }
+    $fileInfo = $file->getFileInfo();
+    if ($fileInfo->getExtension() != 'mp3') {
+        // Only process mp3 files.
+        continue;
+    }
+
+    $files[] = $file->getPath().'/'.$file->getBasename();
+
+    print "Determining duration of {$file->getFilename()}\n";
+    $duration = (int) exec('mp3info -p "%S" '.escapeshellarg($file->getPath().'/'.$file->getBasename()));
+
+    $albumDuration += $duration;
+}
+sort($files);
+
+print "Album duration: $albumDuration\n";
+
+$client = new RoviClient();
+$client
+    ->setApiKey($config->apiKey)
+    ->setSecret($config->secret);
+
+$searchRequest = new SearchRequest(
+    'album',
+    $argv[2],
+    array('classicalReview', 'credits', 'tracks', 'styles')
+);
+
+/** @var SearchResponse $response */
+$response = $client->getRequest($searchRequest);
+
+/** @var Album[] $matchedAlbums */
+$matchedAlbums = array();
+
+/** @var SearchResult $result */
+foreach ($response->results as $result) {
+    if (($result->album->duration * (1 - THRESHHOLD)) <= $albumDuration &&
+        ($result->album->duration * (1 + THRESHHOLD)) >= $albumDuration &&
+        count($result->album->tracks) == count($files)
+    ) {
+        print "Found album '{$result->album->title}' by '{$result->album->primaryArtists[0]->name}' with duration ".
+            "{$result->album->duration}\n";
+
+        $matchedAlbums[] = $result->album;
+    }
+}
+
+if (count($matchedAlbums) > 1) {
+    print "Too many albums matched. Not implemented.\n";
+    exit(1);
+}
+
+if (count($matchedAlbums) == 0) {
+    print "No albums matched.\n";
+    exit(1);
+}
+
+$matchedAlbum = $matchedAlbums[0];
+
+foreach ($files as $index => $file) {
+    $track = $matchedAlbum->tracks[$index];
+
+    $primaryArtistNames = array_map(
+        function (Artist $artist) { return $artist->name; },
+        $matchedAlbum->primaryArtists
+    );
+    $primaryArtistNames = implode(', ', $primaryArtistNames);
+
+    $performerNames = array_map(
+        function (Artist $artist) { return $artist->name; },
+        $track->performers
+    );
+    $performerNames = implode(', ', $performerNames);
+
+    $composerNames = array_map(
+        function (Artist $artist) { return $artist->name; },
+        $track->composers
+    );
+    $composerNames = implode(', ', $composerNames);
+
+    $genreNames = array_map(
+        function (Genre $genre) { return $genre->name; },
+        $matchedAlbum->genres
+    );
+    $genreNames = implode(', ', $genreNames);
+
+    $styleNames = array_map(
+        function (Style $style) { return $style->name; },
+        $matchedAlbum->styles
+    );
+    $styleNames = implode(', ', $styleNames);
+
+    $classicalReviewText = isset($matchedAlbum->classicalReview) ? $matchedAlbum->classicalReview->text : '';
+
+    preg_match('/[0-9]{4}/', $matchedAlbum->originalReleaseDate, $matches);
+    $originalReleaseDateYear = (int) $matches[0];
+
+    $tags = array(
+        'album'   => $matchedAlbum->title,
+        'artist'  => $performerNames,
+        'brand'   => $primaryArtistNames,
+        'comment' => $classicalReviewText,
+        'genre'   => trim($genreNames.' - '.$styleNames, ' -'),
+        'title'   => trim($track->part.' '.$track->title),
+        'track'   => str_pad($track->disc, 2, '0', STR_PAD_LEFT).'-'.str_pad($track->number, 3, '0', STR_PAD_LEFT),
+        'year'    => $originalReleaseDateYear,
+    );
+
+    $writer = new getid3_writetags();
+
+    $writer->filename          = $file;
+    $writer->tagformats        = array('id3v1', 'id3v2.3', 'id3v2.4');
+    $writer->overwrite_tags    = true;
+    $writer->tag_encoding      = 'UTF-8';
+    $writer->remove_other_tags = true;
+
+    $writer->getid3_writetags();
+
+    print "Finished writing tags\n";
+}
