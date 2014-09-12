@@ -134,25 +134,37 @@ foreach ($files as $index => $file) {
     $originalReleaseDateYear = (int) $matches[0];
 
     $tags = array(
-        'album'   => $matchedAlbum->title,
-        'artist'  => $performerNames,
-        'brand'   => $primaryArtistNames,
-        'comment' => $classicalReviewText,
-        'genre'   => trim($genreNames.' - '.$styleNames, ' -'),
-        'title'   => trim($track->part.' '.$track->title),
-        'track'   => str_pad($track->disc, 2, '0', STR_PAD_LEFT).'-'.str_pad($track->number, 3, '0', STR_PAD_LEFT),
-        'year'    => $originalReleaseDateYear,
+        'album'         => array($matchedAlbum->title),
+        'artist'        => array($performerNames),
+        'band'          => array($primaryArtistNames),
+        'comment'       => array($classicalReviewText),
+        'genre'         => array(trim($genreNames.' - '.$styleNames, ' -')),
+        'title'         => array(trim($track->part.' '.$track->title)),
+        'track'         => array((int) $track->number),
+        'part_of_a_set' => array((int) $track->disc),
+        'year'          => array($originalReleaseDateYear),
     );
+
+    $trackString = str_pad($track->disc, 2, '0', STR_PAD_LEFT).'-'.str_pad($track->number, 3, '0', STR_PAD_LEFT);
 
     $writer = new getid3_writetags();
 
     $writer->filename          = $file;
-    $writer->tagformats        = array('id3v1', 'id3v2.3', 'id3v2.4');
+    $writer->tagformats        = array('id3v1', 'id3v2.4');
     $writer->overwrite_tags    = true;
     $writer->tag_encoding      = 'UTF-8';
     $writer->remove_other_tags = true;
+    $writer->tag_data          = $tags;
 
-    $writer->getid3_writetags();
+    $writer->WriteTags();
 
-    print "Finished writing tags\n";
+    if (count($writer->errors)) {
+        print "Error(s) tagging file {$file}:\n";
+        foreach ($writer->errors as $error) {
+            print "    {$error}\n";
+        }
+        exit(1);
+    }
 }
+
+print "Finished writing tags\n";
