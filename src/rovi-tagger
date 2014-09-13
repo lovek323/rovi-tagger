@@ -109,12 +109,7 @@ foreach ($response->results as $result) {
     print "\n";
 }
 
-if (count($matchedAlbums) > 1) {
-    print "Too many albums matched. Not implemented.\n";
-    exit(1);
-}
-
-if (count($matchedAlbums) == 0) {
+if ($bestMatchedAlbum === null) {
     print "No albums matched.\n";
     exit(1);
 }
