@@ -72,9 +72,6 @@ $matchedAlbums = array();
 
 /** @var SearchResult $result */
 foreach ($response->results as $result) {
-    print "Found album '{$result->album->title}' by '{$result->album->primaryArtists[0]->name}' with duration ".
-        "{$result->album->duration}";
-
     $resultAlbumDuration = $result->album->duration;
 
     if ($resultAlbumDuration == 0) {
@@ -82,6 +79,9 @@ foreach ($response->results as $result) {
             $resultAlbumDuration += $track->duration;
         }
     }
+
+    print "Found album '{$result->album->title}' by '{$result->album->primaryArtists[0]->name}' with duration ".
+        "{$resultAlbumDuration}";
 
     if (($resultAlbumDuration * (1 - THRESHHOLD)) <= $albumDuration &&
         ($resultAlbumDuration * (1 + THRESHHOLD)) >= $albumDuration &&
