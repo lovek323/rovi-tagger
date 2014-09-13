@@ -71,6 +71,9 @@ $response = $client->getRequest($searchRequest);
 /** @var Album[] $matchedAlbums */
 $matchedAlbums = array();
 
+$bestMatchedAlbumPercentage = 0;
+$bestMatchedAlbum           = null;
+
 /** @var SearchResult $result */
 foreach ($response->results as $result) {
     $resultAlbumDuration = $result->album->duration;
@@ -88,11 +91,19 @@ foreach ($response->results as $result) {
         ($resultAlbumDuration * (1 + THRESHHOLD)) >= $albumDuration &&
         count($result->album->tracks) == count($mp3Filenames)
     ) {
-        $percentageMatch = number_format(abs($resultAlbumDuration - $albumDuration) / $resultAlbumDuration * 100, 2);
+        $percentageMatch = number_format(
+            100 - abs($resultAlbumDuration - $albumDuration) / $resultAlbumDuration * 100,
+            2
+        );
 
         print "\tMatched\t$percentageMatch%";
 
         $matchedAlbums[] = $result->album;
+
+        if ($percentageMatch > $bestMatchedAlbum) {
+            $bestMatchedAlbumPercentage = $percentageMatch;
+            $bestMatchedAlbum           = $result->album;
+        }
     }
 
     print "\n";
