@@ -186,7 +186,7 @@ foreach ($mp3Filenames as $index => $file) {
         $trackNumber     = str_pad($track->disc, 2, '0', STR_PAD_LEFT).'-'.str_pad($track->number, 3, '0', STR_PAD_LEFT);
         $sanitizedTitle  = sanitizePath($track->title);
         $newDirectory    = $config->directory.'/'.$sanitizedArtist.'/'.$sanitizedAlbum;
-        $newFilename     = $newDirectory.'/'.$trackNumber.' - '.$sanitizedTitle.'mp3';
+        $newFilename     = $newDirectory.'/'.$trackNumber.' - '.$sanitizedTitle.'.mp3';
 
         print "Moving {$file} to {$newFilename}\n";
 
