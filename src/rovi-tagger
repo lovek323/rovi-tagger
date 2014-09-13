@@ -100,7 +100,7 @@ foreach ($response->results as $result) {
 
         $matchedAlbums[] = $result->album;
 
-        if ($percentageMatch > $bestMatchedAlbum) {
+        if ($percentageMatch > $bestMatchedAlbumPercentage) {
             $bestMatchedAlbumPercentage = $percentageMatch;
             $bestMatchedAlbum           = $result->album;
         }
