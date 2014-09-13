@@ -146,11 +146,17 @@ foreach ($mp3Filenames as $index => $file) {
     );
     $genreNames = implode(', ', $genreNames);
 
-    $styleNames = array_map(
-        function (Style $style) { return $style->name; },
-        $matchedAlbum->styles
-    );
-    $styleNames = implode(', ', $styleNames);
+    if (is_array($matchedAlbum->styles)) {
+        $styleNames = array_map(
+            function (Style $style) {
+                return $style->name;
+            },
+            $matchedAlbum->styles
+        );
+        $styleNames = implode(', ', $styleNames);
+    } else {
+        $styleNames = '';
+    }
 
     $classicalReviewText = isset($matchedAlbum->classicalReview) ? $matchedAlbum->classicalReview->text : '';
 
