@@ -23,16 +23,16 @@ if (count($argv) < 3) {
 }
 
 $config        = json_decode(file_get_contents(__DIR__.'/config.json'));
-$directory     = $argv[1];
+$newDirectory     = $argv[1];
 $files         = array();
 $albumDuration = 0;
-$dirIterator   = new RecursiveDirectoryIterator($directory);
+$dirIterator   = new RecursiveDirectoryIterator($newDirectory);
 $iterator      = new RecursiveIteratorIterator($dirIterator);
 
 /** @var SplFileInfo $file */
 foreach ($iterator as $file) {
-    $filename = $file->getFilename();
-    if ($filename[0] == '.') {
+    $newFilename = $file->getFilename();
+    if ($newFilename[0] == '.') {
         // Ignore hidden files.
         continue;
     }
@@ -115,6 +115,9 @@ foreach ($files as $index => $file) {
         $matchedAlbum->primaryArtists
     );
     $primaryArtistNames = implode(', ', $primaryArtistNames);
+    if (empty($primaryArtistNames)) {
+        $primaryArtistNames = 'Unknown Artist';
+    }
 
     $performerNames = array_map(
         function (Artist $artist) { return $artist->name; },
@@ -157,8 +160,6 @@ foreach ($files as $index => $file) {
         'year'          => array($originalReleaseDateYear),
     );
 
-    $trackString = str_pad($track->disc, 2, '0', STR_PAD_LEFT).'-'.str_pad($track->number, 3, '0', STR_PAD_LEFT);
-
     $writer = new getid3_writetags();
 
     $writer->filename          = $file;
@@ -177,6 +178,31 @@ foreach ($files as $index => $file) {
         }
         exit(1);
     }
+
+    if (!empty($config->directory)) {
+        $sanitizedArtist = sanitizePath($primaryArtistNames);
+        $sanitizedAlbum  = sanitizePath($matchedAlbum->title);
+        $trackNumber     = str_pad($track->disc, 2, '0', STR_PAD_LEFT).'-'.str_pad($track->number, 3, '0', STR_PAD_LEFT);
+        $sanitizedTitle  = sanitizePath($track->title);
+        $newDirectory    = $config->directory.'/'.$sanitizedArtist.'/'.$sanitizedAlbum;
+        $newFilename     = $newDirectory.'/'.$trackNumber.' - '.$sanitizedTitle.'mp3';
+
+        print "Moving {$file} to {$newFilename}\n";
+
+        mkdir($newDirectory, 0777, true);
+        rename($file, $newFilename);
+    }
 }
 
-print "Finished writing tags\n";
+print "Finished writing tags and moving files\n";
+
+/**
+ * Sanitize a filesystem path.
+ *
+ * @param string $path The path to sanitize.
+ * @return string The sanitized path.
+ */
+function sanitizePath($path)
+{
+    return str_replace('/', '_', $path);
+}
