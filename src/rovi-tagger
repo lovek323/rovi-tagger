@@ -88,7 +88,9 @@ foreach ($response->results as $result) {
         ($resultAlbumDuration * (1 + THRESHHOLD)) >= $albumDuration &&
         count($result->album->tracks) == count($mp3Filenames)
     ) {
-        print "\tMatched";
+        $percentageMatch = number_format(abs($resultAlbumDuration - $albumDuration) / $resultAlbumDuration * 100, 2);
+
+        print "\tMatched\t$percentageMatch%";
 
         $matchedAlbums[] = $result->album;
     }
