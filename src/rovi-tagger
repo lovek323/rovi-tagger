@@ -189,7 +189,10 @@ foreach ($files as $index => $file) {
 
         print "Moving {$file} to {$newFilename}\n";
 
-        mkdir($newDirectory, 0777, true);
+        if (!is_dir($newDirectory)) {
+            mkdir($newDirectory, 0777, true);
+        }
+
         rename($file, $newFilename);
     }
 }
