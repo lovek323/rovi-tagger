@@ -52,6 +52,11 @@ foreach ($iterator as $file) {
 }
 sort($mp3Filenames);
 
+if (!count($mp3Filenames)) {
+    print "No MP3 files found. Aborting.\n";
+    exit(1);
+}
+
 print "Album duration: $albumDuration\n";
 
 $client = new RoviClient();
