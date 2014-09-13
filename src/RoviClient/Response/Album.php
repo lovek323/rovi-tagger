@@ -95,7 +95,7 @@ class Album extends EntityAbstract
         $retval->originalReleaseDate = $object->originalReleaseDate;
         $retval->rating              = $object->rating;
         $retval->isPick              = $object->isPick;
-        $retval->genres              = Genre::fromObjectArray($object->genres);
+        $retval->genres              = Genre::fromObjectArray((array) $object->genres);
         $retval->headlineReview      = $object->headlineReview;
         $retval->classicalReview     = ClassicalReview::fromObject($object->classicalReview);
         $retval->credits             = Credit::fromObjectArray((array) $object->credits);
