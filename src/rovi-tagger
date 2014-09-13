@@ -75,8 +75,16 @@ foreach ($response->results as $result) {
     print "Found album '{$result->album->title}' by '{$result->album->primaryArtists[0]->name}' with duration ".
         "{$result->album->duration}";
 
-    if (($result->album->duration * (1 - THRESHHOLD)) <= $albumDuration &&
-        ($result->album->duration * (1 + THRESHHOLD)) >= $albumDuration &&
+    $resultAlbumDuration = $result->album->duration;
+
+    if ($resultAlbumDuration == 0) {
+        foreach ($result->album->tracks as $track) {
+            $resultAlbumDuration += $track->duration;
+        }
+    }
+
+    if (($resultAlbumDuration * (1 - THRESHHOLD)) <= $albumDuration &&
+        ($resultAlbumDuration * (1 + THRESHHOLD)) >= $albumDuration &&
         count($result->album->tracks) == count($files)
     ) {
         print "\tMatched";
