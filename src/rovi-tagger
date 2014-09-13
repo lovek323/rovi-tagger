@@ -22,12 +22,13 @@ if (count($argv) < 3) {
     exit(1);
 }
 
-$config        = json_decode(file_get_contents(__DIR__.'/config.json'));
-$newDirectory     = $argv[1];
-$files         = array();
-$albumDuration = 0;
-$dirIterator   = new RecursiveDirectoryIterator($newDirectory);
-$iterator      = new RecursiveIteratorIterator($dirIterator);
+$config         = json_decode(file_get_contents(__DIR__.'/config.json'));
+$directory      = $argv[1];
+$imageFilenames = array();
+$mp3Filenames   = array();
+$albumDuration  = 0;
+$dirIterator    = new RecursiveDirectoryIterator($directory);
+$iterator       = new RecursiveIteratorIterator($dirIterator);
 
 /** @var SplFileInfo $file */
 foreach ($iterator as $file) {
@@ -37,19 +38,19 @@ foreach ($iterator as $file) {
         continue;
     }
     $fileInfo = $file->getFileInfo();
+    if ($fileInfo->getExtension() == 'jpg') {
+        $imageFilenames[] = $file->getPath().'/'.$file->getBasename();
+    }
     if ($fileInfo->getExtension() != 'mp3') {
         // Only process mp3 files.
         continue;
     }
-
-    $files[] = $file->getPath().'/'.$file->getBasename();
-
+    $mp3Filenames[] = $file->getPath().'/'.$file->getBasename();
     print "Determining duration of {$file->getFilename()}\n";
     $duration = (int) exec('mp3info -p "%S" '.escapeshellarg($file->getPath().'/'.$file->getBasename()));
-
     $albumDuration += $duration;
 }
-sort($files);
+sort($mp3Filenames);
 
 print "Album duration: $albumDuration\n";
 
@@ -85,7 +86,7 @@ foreach ($response->results as $result) {
 
     if (($resultAlbumDuration * (1 - THRESHHOLD)) <= $albumDuration &&
         ($resultAlbumDuration * (1 + THRESHHOLD)) >= $albumDuration &&
-        count($result->album->tracks) == count($files)
+        count($result->album->tracks) == count($mp3Filenames)
     ) {
         print "\tMatched";
 
@@ -107,7 +108,7 @@ if (count($matchedAlbums) == 0) {
 
 $matchedAlbum = $matchedAlbums[0];
 
-foreach ($files as $index => $file) {
+foreach ($mp3Filenames as $index => $file) {
     $track = $matchedAlbum->tracks[$index];
 
     $primaryArtistNames = array_map(
@@ -194,6 +195,23 @@ foreach ($files as $index => $file) {
         }
 
         rename($file, $newFilename);
+    }
+}
+
+// Now move all image files
+if (!empty($config->directory)) {
+    $sanitizedArtist = sanitizePath($primaryArtistNames);
+    $sanitizedAlbum  = sanitizePath($matchedAlbum->title);
+    $newDirectory    = $config->directory.'/'.$sanitizedArtist.'/'.$sanitizedAlbum;
+
+    print "Moving {$file} to {$newFilename}\n";
+
+    if (!is_dir($newDirectory)) {
+        mkdir($newDirectory, 0777, true);
+    }
+
+    foreach ($imageFilenames as $imageFilename) {
+        rename($imageFilename, $newDirectory.'/'.basename($imageFilename));
     }
 }
 
