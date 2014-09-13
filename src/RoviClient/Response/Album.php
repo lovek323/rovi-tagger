@@ -88,7 +88,7 @@ class Album extends EntityAbstract
 
         $retval->ids                 = (array) $object->ids;
         $retval->title               = $object->title;
-        $retval->primaryArtists      = Artist::fromObjectArray($object->primaryArtists);
+        $retval->primaryArtists      = Artist::fromObjectArray((array) $object->primaryArtists);
         $retval->guestArtists        = Artist::fromObjectArray((array) $object->guestArtists);
         $retval->flags               = $object->flags;
         $retval->duration            = $object->duration;
