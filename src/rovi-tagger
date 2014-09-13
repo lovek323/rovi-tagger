@@ -210,7 +210,7 @@ foreach ($mp3Filenames as $index => $file) {
             mkdir($newDirectory, 0777, true);
         }
 
-        rename($file, $newFilename);
+        copy($file, $newFilename);
     }
 }
 
@@ -227,7 +227,7 @@ if (!empty($config->directory)) {
     }
 
     foreach ($imageFilenames as $imageFilename) {
-        rename($imageFilename, $newDirectory.'/'.basename($imageFilename));
+        copy($imageFilename, $newDirectory.'/'.basename($imageFilename));
     }
 }
 
