@@ -32,8 +32,8 @@ $iterator       = new RecursiveIteratorIterator($dirIterator);
 
 /** @var SplFileInfo $file */
 foreach ($iterator as $file) {
-    $newFilename = $file->getFilename();
-    if ($newFilename[0] == '.') {
+    $filename = $file->getFilename();
+    if ($filename[0] == '.') {
         // Ignore hidden files.
         continue;
     }
@@ -71,9 +71,6 @@ $response = $client->getRequest($searchRequest);
 /** @var Album[] $matchedAlbums */
 $matchedAlbums = array();
 
-$bestMatchedAlbumPercentage = 0;
-$bestMatchedAlbum           = null;
-
 /** @var SearchResult $result */
 foreach ($response->results as $result) {
     $resultAlbumDuration = $result->album->duration;
@@ -98,21 +95,24 @@ foreach ($response->results as $result) {
 
         print "\tMatched\t$percentageMatch%";
 
-        $matchedAlbums[] = $result->album;
-
-        if ($percentageMatch > $bestMatchedAlbumPercentage) {
-            $bestMatchedAlbumPercentage = $percentageMatch;
-            $bestMatchedAlbum           = $result->album;
+        if (isset($matchedAlbum[$percentageMatch])) {
+            print "Multiple albums with same match percentage. Not supported.\n";
+            exit(1);
         }
+
+        $matchedAlbums[$percentageMatch] = $result->album;
     }
 
     print "\n";
 }
 
-if ($bestMatchedAlbum === null) {
+if (count($matchedAlbums) === null) {
     print "No albums matched.\n";
     exit(1);
 }
+
+// Order by percentage descending - 100% being the closest match.
+krsort($matchedAlbums);
 
 $matchedAlbum = $matchedAlbums[0];
 
