@@ -114,7 +114,9 @@ if (count($matchedAlbums) === null) {
 // Order by percentage descending - 100% being the closest match.
 krsort($matchedAlbums);
 
-$matchedAlbum = $matchedAlbums[0];
+$matchedAlbum = array_shift(array_values($matchedAlbums));
+
+print "Using album {$matchedAlbum->title} by {$matchedAlbum->primaryArtists[0]->name}\n";
 
 foreach ($mp3Filenames as $index => $file) {
     $track = $matchedAlbum->tracks[$index];
